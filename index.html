@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>温怒計 クールダウン｜特別支援教材開発研究所</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F7F1E3; --card:#FFFDF6; --ink:#3d3320; --sub:#7a6c52; --line:#e6dcc6;
+  --hot:#ef8a6f; --hot-d:#b9563c; --cool:#6fb3df; --cool-d:#2f78a8;
+  --breath-a:#e3f2fb; --breath-b:#a8d3ee;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  height:100vh;height:100dvh;display:flex;flex-direction:column;
+  background:var(--bg);color:var(--ink);
+  font-family:"Zen Maru Gothic","BIZ UDPGothic","Hiragino Maru Gothic ProN",system-ui,sans-serif;
+  overscroll-behavior:none;overflow:hidden;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+  padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px);
+}
+button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
+button:focus-visible{outline:4px solid #f2b705;outline-offset:3px}
+ruby rt{font-size:.45em;font-weight:700}
+
+/* header */
+header{display:flex;align-items:center;gap:10px;padding:10px 16px 8px;flex-wrap:wrap}
+h1{margin:0;font-size:clamp(19px,3vw,26px);font-weight:900;letter-spacing:.02em}
+.steps{display:flex;gap:6px;margin-left:auto;list-style:none;padding:0}
+.steps li{font-size:clamp(12px,1.7vw,15px);font-weight:700;padding:5px 12px;border-radius:999px;background:#ece3cf;color:var(--sub)}
+.steps li.on{background:var(--ink);color:#fff}
+.gear{min-width:48px;min-height:44px;border:2px solid var(--line);background:var(--card);border-radius:14px;font-size:14px;font-weight:700;padding:0 12px}
+
+/* layout */
+main{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:minmax(0,1fr) auto;gap:12px;padding:0 16px 12px}
+.thermo{min-height:0;background:var(--card);border-radius:28px;display:flex;align-items:center;justify-content:center;padding:14px 6px}
+.thermo svg{height:100%;width:100%;max-height:100%;display:block}
+.stage{min-height:0;background:var(--card);border-radius:28px;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px 18px;text-align:center}
+.readout[hidden]{display:none}
+.readout{display:flex;align-items:baseline;gap:.25em;line-height:1;position:relative}
+.readout .lbl{font-size:clamp(18px,3vmin,28px);font-weight:900;color:var(--sub)}
+.readout .num{font-size:clamp(64px,17vmin,150px);font-weight:900;font-variant-numeric:tabular-nums;min-width:2.2ch;text-align:right;transition:color .3s}
+.plus{position:absolute;right:-.2em;top:-.1em;font-size:clamp(20px,4vmin,34px);font-weight:900;color:var(--hot-d);pointer-events:none;animation:plusUp .6s ease-out forwards}
+@keyframes plusUp{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-36px)}}
+.msg{margin:14px 0 0;font-size:clamp(17px,2.9vmin,26px);font-weight:700;line-height:1.7}
+.hint{margin-top:10px;font-size:clamp(15px,2.4vmin,20px);font-weight:700;color:var(--hot-d);min-height:1.6em}
+
+/* breathing */
+.panel[hidden]{display:none!important}
+#panelCool{flex:1;min-height:0;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.breath{position:relative;flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center}
+.ball{width:min(68%,44vmin);aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle at 50% 42%,var(--breath-a) 0%,var(--breath-b) 100%);
+  box-shadow:0 0 0 6px #fff, 0 0 0 9px #cfe6f5;transform:scale(.5);will-change:transform}
+.ring{position:absolute;width:min(68%,44vmin);aspect-ratio:1;border-radius:50%;border:4px solid #8cc5ea;opacity:0;pointer-events:none}
+.ring.go{animation:ring .9s ease-out}
+@keyframes ring{from{opacity:.7;transform:scale(.55)}to{opacity:0;transform:scale(1.05)}}
+.word{position:absolute;font-size:clamp(44px,11vmin,96px);font-weight:900;color:var(--cool-d);letter-spacing:.08em}
+.coolnote{font-size:clamp(14px,2.2vmin,18px);font-weight:700;color:var(--sub);margin:6px 0 0}
+.stage.cooling .readout .num{font-size:clamp(44px,10vmin,96px)}
+
+/* controls */
+.controls{grid-column:1 / -1;display:flex;gap:12px;align-items:stretch}
+.controls[hidden]{display:none}
+.adj{display:flex;flex-direction:column;gap:8px;width:clamp(60px,9vw,80px)}
+.adj button{flex:1;min-height:44px;border:2px solid var(--line);background:var(--card);border-radius:16px;font-size:clamp(16px,2.4vmin,22px);font-weight:900}
+.adj button:disabled{opacity:.35}
+.big{flex:1;min-height:clamp(92px,17vmin,150px);border:none;border-radius:30px;font-size:clamp(24px,5vmin,44px);font-weight:900;color:#fff;
+  transition:transform .06s,box-shadow .06s;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:none;position:relative}
+.big .sub{display:block;font-size:.42em;font-weight:700;opacity:.95;margin-top:2px}
+.btn-charge{background:var(--hot);box-shadow:0 9px 0 var(--hot-d)}
+.btn-charge.pressed{transform:translateY(7px);box-shadow:0 2px 0 var(--hot-d)}
+.btn-cool{background:var(--cool);box-shadow:0 9px 0 var(--cool-d)}
+.btn-cool.pressed{transform:translateY(7px);box-shadow:0 2px 0 var(--cool-d),0 0 0 6px #cfe6f5}
+.big:disabled{opacity:.38;cursor:default}
+.big:disabled.btn-charge,.big:disabled.btn-cool{box-shadow:0 9px 0 #b9b0a0}
+
+/* check */
+#panelCheck{width:100%;max-width:760px;overflow:auto;max-height:100%;padding:4px}
+#panelCheck h2{margin:0 0 4px;font-size:clamp(22px,4vmin,34px);font-weight:900}
+.change{display:inline-flex;align-items:baseline;gap:.4em;font-weight:900;font-size:clamp(18px,3vmin,26px);background:#f3ecdc;border-radius:999px;padding:6px 18px;margin:4px 0 6px}
+.change b{font-size:1.3em;font-variant-numeric:tabular-nums}
+.note{margin:4px 0 12px;font-size:clamp(14px,2.2vmin,18px);color:var(--sub);font-weight:700}
+.choices{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.choice{border:3px solid var(--line);background:#fff;border-radius:20px;padding:8px 6px;min-height:56px;display:flex;flex-direction:row;justify-content:center;align-items:center;gap:8px;font-size:clamp(15px,2.5vmin,20px);font-weight:900;line-height:1.35}
+.choice svg{width:clamp(32px,6vmin,48px);height:auto;flex:none}
+.choice[aria-pressed="true"]{border-color:var(--ink);background:#fff6d8}
+.reply{min-height:1.7em;margin:8px 0 6px;font-size:clamp(16px,2.7vmin,22px);font-weight:700;line-height:1.7}
+.actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.act{min-height:56px;padding:0 22px;border-radius:18px;border:none;font-size:clamp(16px,2.6vmin,21px);font-weight:900;color:#fff}
+.act.again{background:var(--cool);box-shadow:0 5px 0 var(--cool-d)}
+.act.reset{background:#b9ad95;box-shadow:0 5px 0 #8f846d}
+.act:active{transform:translateY(4px);box-shadow:none}
+
+/* settings */
+.sheet{position:fixed;inset:0;background:rgba(61,51,32,.35);display:flex;align-items:center;justify-content:center;padding:16px;z-index:10}
+.sheet[hidden]{display:none}
+.sheet .box{background:var(--card);border-radius:24px;padding:20px 22px;width:min(560px,100%);max-height:100%;overflow:auto;-webkit-user-select:text;user-select:text}
+.sheet h2{margin:0 0 12px;font-size:22px;font-weight:900}
+.row{margin:0 0 14px}
+.row .t{font-weight:900;margin-bottom:6px;font-size:16px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{min-height:44px;padding:0 14px;border:2px solid var(--line);background:#fff;border-radius:12px;font-size:15px;font-weight:700}
+.seg button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.small{font-size:13px;color:var(--sub);line-height:1.6;margin:6px 0 0;font-family:"BIZ UDPGothic",sans-serif}
+.close{display:block;margin:6px auto 0;min-height:48px;padding:0 36px;border:none;border-radius:14px;background:var(--ink);color:#fff;font-size:17px;font-weight:900}
+footer{text-align:center;font-size:11px;color:var(--sub);padding:0 0 6px;font-family:"BIZ UDPGothic",sans-serif}
+
+/* narrow / short screens */
+@media (max-width:600px) and (orientation:portrait){
+  main{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) minmax(0,1fr) auto}
+  .choice{padding:6px 4px;gap:4px}
+  .act{padding:0 12px;min-height:50px;font-size:15px}
+  main:has(#panelCheck:not([hidden])){grid-template-rows:minmax(0,1fr) minmax(0,2.2fr) auto}
+  .steps li{padding:4px 8px}
+}
+@media (max-height:520px) and (orientation:landscape){
+  header{padding:6px 12px 4px}
+  .steps{display:none}
+  .big{min-height:72px}
+  footer{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  .plus,.ring.go{animation:none;opacity:0}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1><ruby>温怒<rt>おんど</rt></ruby><ruby>計<rt>けい</rt></ruby> クールダウン</h1>
+  <ol class="steps" aria-label="すすみかた">
+    <li id="st1" class="on">はかる</li>
+    <li id="st2">おちつく</li>
+    <li id="st3">たしかめる</li>
+  </ol>
+  <button class="gear" id="btnSettings" type="button" aria-haspopup="dialog">せってい</button>
+</header>
+
+<main>
+  <div class="thermo">
+    <svg id="thermo" viewBox="0 0 160 420" role="img" aria-label="おんど 0">
+      <g fill="#3d3320" stroke="#3d3320" stroke-width="8">
+        <rect x="45" y="10" width="50" height="345" rx="25"/>
+        <circle cx="70" cy="365" r="44"/>
+      </g>
+      <g fill="#fff">
+        <rect x="45" y="10" width="50" height="345" rx="25"/>
+        <circle cx="70" cy="365" r="44"/>
+      </g>
+      <g id="ticks"></g>
+      <circle id="bulb" cx="70" cy="365" r="33" fill="rgb(126,192,234)"/>
+      <rect id="liquid" x="58" width="24" rx="12" y="320" height="52" fill="rgb(126,192,234)"/>
+    </svg>
+  </div>
+
+  <section class="stage" id="stage" aria-live="off">
+    <div class="readout" id="readout">
+      <span class="lbl"><ruby>温怒<rt>おんど</rt></ruby></span>
+      <span class="num" id="num">0</span>
+    </div>
+
+    <div class="panel" id="panelCharge">
+      <p class="msg" id="msg"></p>
+      <div class="hint" id="hint" role="status"></div>
+    </div>
+
+    <div class="panel" id="panelCool" hidden>
+      <div class="breath">
+        <div class="ball" id="ball"></div>
+        <div class="ring" id="ring"></div>
+        <div class="word" id="word">すう</div>
+      </div>
+      <p class="coolnote">ゆびを はなすと おわるよ</p>
+    </div>
+
+    <div class="panel" id="panelCheck" hidden>
+      <h2>いまの きもちは？</h2>
+      <div class="change" id="change"><ruby>温怒<rt>おんど</rt></ruby> <b id="chFrom">0</b> → <b id="chTo">0</b></div>
+      <p class="note">おんどの かずと、じぶんの かんじは ちがうことも あるよ。</p>
+      <div class="choices" id="choices">
+        <button class="choice" type="button" data-feel="clear" aria-pressed="false">
+          <svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="28" fill="#ffe08a" stroke="#3d3320" stroke-width="3"/><circle cx="23" cy="27" r="3.2" fill="#3d3320"/><circle cx="41" cy="27" r="3.2" fill="#3d3320"/><path d="M18 37 Q32 52 46 37" fill="none" stroke="#3d3320" stroke-width="3.5" stroke-linecap="round"/></svg>
+          すっきりした</button>
+        <button class="choice" type="button" data-feel="bit" aria-pressed="false">
+          <svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="28" fill="#fdeaa6" stroke="#3d3320" stroke-width="3"/><circle cx="23" cy="28" r="3.2" fill="#3d3320"/><circle cx="41" cy="28" r="3.2" fill="#3d3320"/><path d="M22 40 Q32 46 42 40" fill="none" stroke="#3d3320" stroke-width="3.5" stroke-linecap="round"/></svg>
+          すこし<br>おちついた</button>
+        <button class="choice" type="button" data-feel="angry" aria-pressed="false">
+          <svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="28" fill="#f8c3ae" stroke="#3d3320" stroke-width="3"/><path d="M17 21 L28 25 M47 21 L36 25" stroke="#3d3320" stroke-width="3.5" stroke-linecap="round"/><circle cx="23" cy="30" r="3.2" fill="#3d3320"/><circle cx="41" cy="30" r="3.2" fill="#3d3320"/><path d="M23 44 L41 44" stroke="#3d3320" stroke-width="3.5" stroke-linecap="round"/></svg>
+          まだ<br>おこっている</button>
+        <button class="choice" type="button" data-feel="unknown" aria-pressed="false">
+          <svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="28" fill="#e8e3d6" stroke="#3d3320" stroke-width="3"/><circle cx="23" cy="28" r="3.2" fill="#3d3320"/><circle cx="41" cy="28" r="3.2" fill="#3d3320"/><path d="M22 43 Q27 39 32 43 Q37 47 42 43" fill="none" stroke="#3d3320" stroke-width="3.5" stroke-linecap="round"/></svg>
+          わからない</button>
+      </div>
+      <p class="reply" id="reply" role="status"></p>
+      <div class="actions">
+        <button class="act again" id="btnAgain" type="button">もういちど おちつく</button>
+        <button class="act reset" id="btnReset" type="button">さいしょから</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="controls" id="controls">
+    <div class="adj">
+      <button id="btnMinus" type="button" aria-label="1 へらす">−1</button>
+      <button id="btnZero" type="button" aria-label="0 に もどす">0</button>
+    </div>
+    <button class="big btn-charge" id="btnCharge" type="button">はかる<span class="sub">いまの いかりまで おす</span></button>
+    <button class="big btn-cool" id="btnCool" type="button" disabled><ruby>冷静<rt>れいせい</rt></ruby>になる<span class="sub">おしたまま</span></button>
+  </div>
+</main>
+<footer>特別支援教材開発研究所</footer>
+
+<div class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+  <div class="box">
+    <h2 id="sheetTitle">せってい</h2>
+    <div class="row">
+      <div class="t">じょうげん（いちばん うえの おんど）</div>
+      <div class="seg" data-key="max">
+        <button type="button" data-val="100">100</button>
+        <button type="button" data-val="200">200</button>
+        <button type="button" data-val="300">300</button>
+        <button type="button" data-val="500">500</button>
+        <button type="button" data-val="999">999</button>
+      </div>
+      <p class="small">温度計の目盛りも上限に合わせて変わります。下がるときは1ずつなので、温怒が大きいほど0まで時間がかかります（200で約25秒、500で約1分）。</p>
+    </div>
+    <div class="row">
+      <div class="t">おんどが さがる じかん</div>
+      <div class="seg" data-key="duration">
+        <button type="button" data-val="6000">6びょう</button>
+        <button type="button" data-val="10000">10びょう</button>
+        <button type="button" data-val="15000">15びょう</button>
+        <button type="button" data-val="20000">20びょう</button>
+      </div>
+      <p class="small">おしつづければ、おんどが 0 になったあとも しんこきゅうを つづけられます。ゆびを はなすと おわります。</p>
+    </div>
+    <div class="row">
+      <div class="t">いきの ながさ</div>
+      <div class="seg" data-key="breath">
+        <button type="button" data-val="short">みじかめ（すう3・はく5）</button>
+        <button type="button" data-val="normal">ふつう（すう4・はく6）</button>
+        <button type="button" data-val="long">ゆっくり（すう5・はく8）</button>
+      </div>
+    </div>
+    <div class="row">
+      <div class="t">ふるえ（はく とき）</div>
+      <div class="seg" data-key="vibe">
+        <button type="button" data-val="on">あり</button>
+        <button type="button" data-val="off">なし</button>
+      </div>
+      <p class="small" id="vibeNote"></p>
+    </div>
+    <div class="row">
+      <div class="t">おと（はく とき）</div>
+      <div class="seg" data-key="sound">
+        <button type="button" data-val="off">なし</button>
+        <button type="button" data-val="on">あり</button>
+      </div>
+    </div>
+    <button class="close" id="btnClose" type="button">とじる</button>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ========== 純粋関数 ========== */
+var MAX = 100, LIMITS = [100,200,300,500,999], MIN_STEP = 120, QUICK_MS = 700, SMIN = 0.5, SMAX = 1.0;
+var BREATHS = { short:{inMs:3000,outMs:5000}, normal:{inMs:4000,outMs:6000}, long:{inMs:5000,outMs:8000} };
+
+function clamp(v, lo, hi){ return Math.min(hi, Math.max(lo, v)); }
+function num(v){ v = Number(v); return isFinite(v) ? v : 0; }
+function ease(p){ p = clamp(num(p), 0, 1); return 0.5 - 0.5 * Math.cos(Math.PI * p); }
+function safeLimit(m){ m = Math.round(num(m)); return LIMITS.indexOf(m) >= 0 ? m : MAX; }
+/* 温度計の目盛りの上端（999 のときは 1000 まで） */
+function scaleTop(m){ m = safeLimit(m); return m === 999 ? 1000 : m; }
+function addTemp(v, d, m){ return clamp(Math.round(num(v)) + Math.round(num(d)), 0, safeLimit(m)); }
+function hueFor(v){ v = clamp(num(v), 0, MAX); return v <= 50 ? 200 - 155 * (v / 50) : 45 - 45 * ((v - 50) / 50); }
+/* あお → うすい → きいろ → オレンジ → あか（みどりを とおらない） */
+var STOPS = [[0,[126,192,234]],[20,[206,228,236]],[40,[246,213,92]],[70,[243,154,74]],[100,[226,80,60]]];
+function rgbFor(v, m){
+  v = clamp(num(v), 0, scaleTop(m)) * 100 / scaleTop(m);
+  for (var i = 1; i < STOPS.length; i++){
+    if (v <= STOPS[i][0]){
+      var a = STOPS[i-1], b = STOPS[i], k = (v - a[0]) / (b[0] - a[0]);
+      return [0,1,2].map(function(j){ return Math.round(a[1][j] + (b[1][j] - a[1][j]) * k); });
+    }
+  }
+  return STOPS[STOPS.length-1][1].slice();
+}
+function colorFor(v, m){ var c = rgbFor(v, m); return 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')'; }
+function inkFor(v, m){ var c = rgbFor(v, m); return 'rgb(' + Math.round(c[0]*.5) + ',' + Math.round(c[1]*.45) + ',' + Math.round(c[2]*.4) + ')'; }
+function stepMs(start, dur){
+  start = Math.floor(num(start)); dur = num(dur);
+  if (start <= 0) return Infinity;
+  return Math.max(MIN_STEP, dur / start);
+}
+/* 押し始めの値 start から elapsed ms 後に目指す値（1ずつ下がる・0で止まる） */
+function targetAt(start, elapsed, dur){
+  start = clamp(Math.floor(num(start)), 0, 999);
+  if (start === 0) return 0;
+  var n = Math.floor(Math.max(0, num(elapsed)) / stepMs(start, dur));
+  return Math.max(0, start - n);
+}
+/* 表示は1フレームに1ずつだけ動かす（数字が飛ばないように） */
+function stepToward(cur, target){
+  cur = Math.round(num(cur)); target = Math.round(num(target));
+  if (cur > target) return cur - 1;
+  if (cur < target) return cur + 1;
+  return cur;
+}
+function breathAt(t, inMs, outMs){
+  inMs = Math.max(1, num(inMs)); outMs = Math.max(1, num(outMs));
+  var cyc = inMs + outMs;
+  t = num(t); t = ((t % cyc) + cyc) % cyc;
+  if (t < inMs){ var p = t / inMs; return { phase:'in', p:p, scale: SMIN + (SMAX - SMIN) * ease(p) }; }
+  var q = (t - inMs) / outMs;
+  return { phase:'out', p:q, scale: SMAX - (SMAX - SMIN) * ease(q) };
+}
+/* 温度計の液面（y座標） 0→320, 目盛りの上端→40 */
+function liquidY(v, m){ var t = scaleTop(m); return 320 - clamp(num(v), 0, t) * 280 / t; }
+
+var core = { MAX:MAX, LIMITS:LIMITS, safeLimit:safeLimit, scaleTop:scaleTop, MIN_STEP:MIN_STEP, QUICK_MS:QUICK_MS, BREATHS:BREATHS, clamp:clamp, ease:ease, addTemp:addTemp,
+  hueFor:hueFor, rgbFor:rgbFor, colorFor:colorFor, inkFor:inkFor, stepMs:stepMs, targetAt:targetAt, stepToward:stepToward,
+  breathAt:breathAt, liquidY:liquidY };
+
+/* ========== 状態 ========== */
+var $ = function(id){ return document.getElementById(id); };
+var clock = { now: function(){ return (window.performance && performance.now) ? performance.now() : Date.now(); } };
+var settings = { max:100, duration:10000, breath:'normal', vibe:'on', sound:'off' };
+var S = {
+  mode:'charge', value:0, practiced:false,
+  coolId:null, t0:0, startValue:0, lastPhase:null, lastPulse:0, raf:0,
+  from:0, feel:null, hintTimer:0
+};
+
+/* ========== ふるえ・おと ========== */
+var Haptics = {
+  label:null,
+  canVibrate: typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function',
+  init: function(){
+    if (this.canVibrate) return;
+    // iPhone（iOS 18 以降の Safari）向け：スイッチ型チェックボックスの切替でかるい触覚を出す
+    try {
+      var lb = document.createElement('label');
+      var cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.setAttribute('switch', ''); cb.tabIndex = -1;
+      lb.appendChild(cb); lb.setAttribute('aria-hidden', 'true');
+      lb.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none';
+      document.body.appendChild(lb); this.label = lb;
+    } catch(e){}
+  },
+  pulse: function(ms){
+    if (settings.vibe !== 'on') return;
+    if (this.canVibrate){ try { navigator.vibrate(ms); } catch(e){} }
+    else if (this.label){ try { this.label.click(); } catch(e){} }
+  },
+  stop: function(){ if (this.canVibrate){ try { navigator.vibrate(0); } catch(e){} } }
+};
+var Sound = {
+  ctx:null,
+  unlock: function(){
+    if (this.ctx) { if (this.ctx.state === 'suspended') { try { this.ctx.resume(); } catch(e){} } return; }
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    try { this.ctx = new AC(); } catch(e){ this.ctx = null; }
+  },
+  exhale: function(){
+    if (settings.sound !== 'on' || !this.ctx) return;
+    try {
+      var c = this.ctx, t = c.currentTime, o = c.createOscillator(), g = c.createGain();
+      o.type = 'sine'; o.frequency.setValueAtTime(330, t); o.frequency.exponentialRampToValueAtTime(220, t + 1.6);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.06, t + 0.15); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.8);
+      o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + 1.9);
+    } catch(e){}
+  }
+};
+
+/* ========== 描画 ========== */
+function buildTicks(){
+  var g = $('ticks'), ns = 'http://www.w3.org/2000/svg', html = '';
+  var top = scaleTop(settings.max), st = top / 10;
+  for (var i = 0; i <= 10; i++){
+    var v = i * st, y = liquidY(v, settings.max), major = i % 2 === 0;
+    html += '<line x1="100" x2="' + (major ? 112 : 107) + '" y1="' + y + '" y2="' + y + '" stroke="#3d3320" stroke-width="' + (major ? 3 : 2) + '" stroke-linecap="round"/>';
+    if (major) html += '<text x="116" y="' + (y + 6) + '" font-size="' + (top >= 1000 ? 15 : 17) + '" font-weight="700" fill="#3d3320" font-family="Zen Maru Gothic, sans-serif">' + v + '</text>';
+  }
+  g.innerHTML = html;
+}
+function renderTemp(){
+  var v = S.value, col = colorFor(v, settings.max), y = liquidY(v, settings.max);
+  $('num').textContent = String(v);
+  $('num').style.color = inkFor(v, settings.max);
+  $('liquid').setAttribute('y', y);
+  $('liquid').setAttribute('height', 372 - y);
+  $('liquid').setAttribute('fill', col);
+  $('bulb').setAttribute('fill', col);
+  $('thermo').setAttribute('aria-label', 'おんど ' + v);
+}
+function canCool(){ return S.value > 0 || S.practiced; }
+function renderMode(){
+  var m = S.mode;
+  $('panelCharge').hidden = m !== 'charge';
+  $('panelCool').hidden = m !== 'cool';
+  $('panelCheck').hidden = m !== 'check';
+  $('readout').hidden = m === 'check';
+  $('controls').hidden = m === 'check';
+  $('stage').classList.toggle('cooling', m === 'cool');
+  $('st1').className = m === 'charge' ? 'on' : '';
+  $('st2').className = m === 'cool' ? 'on' : '';
+  $('st3').className = m === 'check' ? 'on' : '';
+  $('btnCharge').disabled = m !== 'charge';
+  $('btnMinus').disabled = m !== 'charge' || S.value <= 0;
+  $('btnZero').disabled = m !== 'charge' || S.value <= 0;
+  $('btnCool').disabled = !(m === 'cool' || (m === 'charge' && canCool()));
+  if (m === 'charge'){
+    $('msg').innerHTML = S.value === 0
+      ? 'いまの いかりは どのくらい？<br>「はかる」を なんども おして、おんどを あわせよう。'
+      : 'じぶんの いかりと おなじに なったら、「<ruby>冷静<rt>れいせい</rt></ruby>になる」を おしたまま にしよう。';
+  }
+}
+function render(){ renderTemp(); renderMode(); }
+function showHint(text){
+  $('hint').textContent = text;
+  clearTimeout(S.hintTimer);
+  S.hintTimer = setTimeout(function(){ $('hint').textContent = ''; }, 2600);
+}
+function floatPlus(){
+  var r = $('readout');
+  if (r.querySelectorAll('.plus').length > 4) return;
+  var s = document.createElement('span');
+  s.className = 'plus'; s.textContent = '+1'; s.setAttribute('aria-hidden', 'true');
+  s.addEventListener('animationend', function(){ if (s.parentNode) s.parentNode.removeChild(s); });
+  r.appendChild(s);
+  setTimeout(function(){ if (s.parentNode) s.parentNode.removeChild(s); }, 900);
+}
+function ripple(){
+  var r = $('ring'); r.classList.remove('go'); void r.offsetWidth; r.classList.add('go');
+}
+
+/* ========== はかる ========== */
+function charge(){
+  if (S.mode !== 'charge') return false;
+  var before = S.value;
+  S.value = addTemp(S.value, 1, settings.max);
+  if (S.value !== before){ floatPlus(); Haptics.pulse(8); }
+  else showHint('いちばん うえまで きたよ');
+  render();
+  return true;
+}
+function minusOne(){ if (S.mode !== 'charge') return; S.value = addTemp(S.value, -1, settings.max); render(); }
+function toZero(){ if (S.mode !== 'charge') return; S.value = 0; render(); }
+
+/* ========== 冷静になる ========== */
+function startCool(id){
+  if (S.mode !== 'charge' || !canCool()) return false;
+  Sound.unlock();
+  S.mode = 'cool'; S.coolId = id; S.t0 = clock.now(); S.startValue = S.value;
+  S.lastPhase = null; S.lastPulse = 0;
+  $('btnCool').classList.add('pressed');
+  render();
+  frame(S.t0);
+  return true;
+}
+function frame(now){
+  if (S.mode !== 'cool') return;
+  var el = now - S.t0;
+  var target = targetAt(S.startValue, el, settings.duration);
+  var nv = stepToward(S.value, target);
+  if (nv !== S.value){ S.value = nv; renderTemp(); }
+  var bp = BREATHS[settings.breath] || BREATHS.normal;
+  var b = breathAt(el, bp.inMs, bp.outMs);
+  $('ball').style.transform = 'scale(' + b.scale.toFixed(4) + ')';
+  if (b.phase !== S.lastPhase){
+    $('word').textContent = b.phase === 'in' ? 'すう' : 'はく';
+    if (b.phase === 'out'){ Haptics.pulse(35); Sound.exhale(); ripple(); S.lastPulse = now; }
+    S.lastPhase = b.phase;
+  } else if (b.phase === 'out' && now - S.lastPulse >= 1500 && b.p < 0.85){
+    Haptics.pulse(15); S.lastPulse = now;
+  }
+  if (typeof requestAnimationFrame === 'function') S.raf = requestAnimationFrame(frame);
+}
+function endCool(){
+  if (S.mode !== 'cool') return false;
+  if (S.raf && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(S.raf);
+  S.raf = 0; S.coolId = null;
+  Haptics.stop();
+  $('btnCool').classList.remove('pressed');
+  var held = clock.now() - S.t0;
+  if (held < QUICK_MS){
+    S.value = S.startValue; S.mode = 'charge'; render();
+    showHint('ゆびを おしたまま にしてね');
+    return true;
+  }
+  S.practiced = true;
+  S.from = S.startValue; S.feel = null;
+  S.mode = 'check';
+  $('chFrom').textContent = String(S.from);
+  $('chTo').textContent = String(S.value);
+  $('reply').textContent = '';
+  var cs = document.querySelectorAll('.choice');
+  for (var i = 0; i < cs.length; i++) cs[i].setAttribute('aria-pressed', 'false');
+  render();
+  return true;
+}
+
+/* ========== たしかめる ========== */
+var REPLIES = {
+  clear:'じぶんで きもちを おちつけることが できたね。',
+  bit:'すこし おちついたね。もういちど しんこきゅう しても いいよ。',
+  angry:'まだ おこっていても だいじょうぶ。もういちど しんこきゅう したり、せんせいに はなしたり してみよう。',
+  unknown:'わからなくても だいじょうぶ。いまの からだの かんじに ゆっくり きづいてみよう。'
+};
+function chooseFeel(key){
+  if (S.mode !== 'check' || !REPLIES[key]) return false;
+  S.feel = key;
+  var cs = document.querySelectorAll('.choice');
+  for (var i = 0; i < cs.length; i++) cs[i].setAttribute('aria-pressed', cs[i].getAttribute('data-feel') === key ? 'true' : 'false');
+  $('reply').textContent = REPLIES[key];
+  return true;
+}
+function again(){ if (S.mode !== 'check') return; S.mode = 'charge'; render(); }
+function resetAll(){ S.value = 0; S.practiced = false; S.feel = null; S.mode = 'charge'; render(); }
+
+/* ========== せってい ========== */
+function syncSettingsUI(){
+  var segs = document.querySelectorAll('.seg');
+  for (var i = 0; i < segs.length; i++){
+    var key = segs[i].getAttribute('data-key'), bs = segs[i].querySelectorAll('button');
+    for (var j = 0; j < bs.length; j++) bs[j].setAttribute('aria-pressed', String(settings[key]) === bs[j].getAttribute('data-val') ? 'true' : 'false');
+  }
+  $('vibeNote').textContent = Haptics.canVibrate
+    ? 'この きかいは ふるえに たいおう しています。'
+    : 'iPad・パソコン・Chromebook では ふるえません。iPhone は iOS 18 以降で かるく ふるえる ことが あります。';
+}
+function openSheet(){ $('sheet').hidden = false; syncSettingsUI(); $('btnClose').focus(); }
+function closeSheet(){ $('sheet').hidden = true; $('btnSettings').focus(); }
+
+/* ========== イベント ========== */
+function bind(){
+  var bc = $('btnCharge'), bk = $('btnCool');
+
+  // はかる：1回おすごとに +1（おしっぱなしでは ふえない）
+  var chargeId = null;
+  bc.addEventListener('pointerdown', function(e){
+    if (e.button !== undefined && e.button !== 0) return;
+    if (chargeId !== null) return;
+    chargeId = e.pointerId === undefined ? 1 : e.pointerId;
+    bc.classList.add('pressed');
+    charge();
+  });
+  function chargeUp(e){
+    if (chargeId === null) return;
+    var id = e.pointerId === undefined ? 1 : e.pointerId;
+    if (id !== chargeId) return;
+    chargeId = null; bc.classList.remove('pressed');
+  }
+  window.addEventListener('pointerup', chargeUp);
+  window.addEventListener('pointercancel', chargeUp);
+  bc.addEventListener('click', function(e){ if (e.detail === 0) charge(); }); // キーボード操作
+
+  // 冷静になる：おしている あいだだけ
+  bk.addEventListener('pointerdown', function(e){
+    if (e.button !== undefined && e.button !== 0) return;
+    if (S.mode !== 'charge') return;
+    e.preventDefault();
+    startCool(e.pointerId === undefined ? 1 : e.pointerId);
+  });
+  function coolUp(e){
+    if (S.mode !== 'cool') return;
+    var id = e.pointerId === undefined ? 1 : e.pointerId;
+    if (S.coolId !== id) return;
+    endCool();
+  }
+  window.addEventListener('pointerup', coolUp);
+  window.addEventListener('pointercancel', coolUp);
+  bk.addEventListener('keydown', function(e){
+    if ((e.key === ' ' || e.key === 'Enter') && !e.repeat){ e.preventDefault(); if (S.mode === 'charge') startCool('key'); }
+    else if (e.key === ' ' || e.key === 'Enter') e.preventDefault();
+  });
+  bk.addEventListener('keyup', function(e){
+    if ((e.key === ' ' || e.key === 'Enter') && S.coolId === 'key'){ e.preventDefault(); endCool(); }
+  });
+  bk.addEventListener('blur', function(){ if (S.coolId === 'key') endCool(); });
+  document.addEventListener('visibilitychange', function(){ if (document.hidden && S.mode === 'cool') endCool(); });
+  document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+
+  $('btnMinus').addEventListener('click', minusOne);
+  $('btnZero').addEventListener('click', toZero);
+  $('choices').addEventListener('click', function(e){
+    var b = e.target.closest ? e.target.closest('.choice') : null;
+    if (b) chooseFeel(b.getAttribute('data-feel'));
+  });
+  $('btnAgain').addEventListener('click', again);
+  $('btnReset').addEventListener('click', resetAll);
+
+  $('btnSettings').addEventListener('click', openSheet);
+  $('btnClose').addEventListener('click', closeSheet);
+  $('sheet').addEventListener('click', function(e){
+    if (e.target === $('sheet')) { closeSheet(); return; }
+    var b = e.target.closest ? e.target.closest('.seg button') : null;
+    if (!b) return;
+    var key = b.parentNode.getAttribute('data-key'), val = b.getAttribute('data-val');
+    settings[key] = (key === 'duration' || key === 'max') ? Number(val) : val;
+    if (key === 'max'){ S.value = Math.min(S.value, settings.max); buildTicks(); render(); }
+    syncSettingsUI();
+  });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && !$('sheet').hidden) closeSheet(); });
+}
+
+/* ========== 起動 ========== */
+buildTicks();
+Haptics.init();
+bind();
+render();
+
+window.__ondo = { core:core, state:S, settings:settings, clock:clock, frame:frame,
+  charge:charge, startCool:startCool, endCool:endCool, chooseFeel:chooseFeel, again:again, resetAll:resetAll };
+})();
+</script>
+</body>
+</html>
