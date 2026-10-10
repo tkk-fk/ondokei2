@@ -198,7 +198,7 @@ footer{text-align:center;font-size:11px;color:var(--sub);padding:0 0 6px;font-fa
       </div>
       <p class="reply" id="reply" role="status"></p>
       <div class="actions">
-        <button class="act again" id="btnAgain" type="button">もういちど おちつく</button>
+        <button class="act again" id="btnAgain" type="button">つづける</button>
         <button class="act reset" id="btnReset" type="button">さいしょから</button>
       </div>
     </div>
@@ -227,16 +227,16 @@ footer{text-align:center;font-size:11px;color:var(--sub);padding:0 0 6px;font-fa
         <button type="button" data-val="500">500</button>
         <button type="button" data-val="999">999</button>
       </div>
-      <p class="small">温度計の目盛りも上限に合わせて変わります。下がるときは1ずつなので、温怒が大きいほど0まで時間がかかります（200で約25秒、500で約1分）。</p>
+      <p class="small">温度計の目盛りも上限に合わせて変わります。下がるときは1ずつなので、温怒が大きいほど0まで時間がかかります（「ふつう」のとき、200で約25秒、500で約1分）。</p>
     </div>
     <div class="row">
-      <div class="t">おんどが さがる じかん</div>
-      <div class="seg" data-key="duration">
-        <button type="button" data-val="6000">6びょう</button>
-        <button type="button" data-val="10000">10びょう</button>
-        <button type="button" data-val="15000">15びょう</button>
-        <button type="button" data-val="20000">20びょう</button>
+      <div class="t">おんどが さがる はやさ</div>
+      <div class="seg" data-key="speed">
+        <button type="button" data-val="200">ゆっくり（1びょうに 5）</button>
+        <button type="button" data-val="125">ふつう（1びょうに 8）</button>
+        <button type="button" data-val="100">はやめ（1びょうに 10）</button>
       </div>
+      <p class="small">温怒100から0までの目安：ゆっくり 約20秒／ふつう 約12秒／はやめ 約10秒。数字は必ず1ずつ下がります。</p>
       <p class="small">おしつづければ、おんどが 0 になったあとも しんこきゅうを つづけられます。ゆびを はなすと おわります。</p>
     </div>
     <div class="row">
@@ -271,7 +271,7 @@ footer{text-align:center;font-size:11px;color:var(--sub);padding:0 0 6px;font-fa
 'use strict';
 
 /* ========== 純粋関数 ========== */
-var MAX = 100, LIMITS = [100,200,300,500,999], MIN_STEP = 120, QUICK_MS = 700, SMIN = 0.5, SMAX = 1.0;
+var MAX = 100, LIMITS = [100,200,300,500,999], SPEEDS = [200,125,100], DEF_SPEED = 125, QUICK_MS = 700, SMIN = 0.5, SMAX = 1.0;
 var BREATHS = { short:{inMs:3000,outMs:5000}, normal:{inMs:4000,outMs:6000}, long:{inMs:5000,outMs:8000} };
 
 function clamp(v, lo, hi){ return Math.min(hi, Math.max(lo, v)); }
@@ -296,16 +296,13 @@ function rgbFor(v, m){
 }
 function colorFor(v, m){ var c = rgbFor(v, m); return 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')'; }
 function inkFor(v, m){ var c = rgbFor(v, m); return 'rgb(' + Math.round(c[0]*.5) + ',' + Math.round(c[1]*.45) + ',' + Math.round(c[2]*.4) + ')'; }
-function stepMs(start, dur){
-  start = Math.floor(num(start)); dur = num(dur);
-  if (start <= 0) return Infinity;
-  return Math.max(MIN_STEP, dur / start);
-}
+/* 1つ下がるまでの間隔（ms）。決められた3つ以外は「ふつう」にする */
+function stepMs(speed){ speed = Math.round(num(speed)); return SPEEDS.indexOf(speed) >= 0 ? speed : DEF_SPEED; }
 /* 押し始めの値 start から elapsed ms 後に目指す値（1ずつ下がる・0で止まる） */
-function targetAt(start, elapsed, dur){
+function targetAt(start, elapsed, speed){
   start = clamp(Math.floor(num(start)), 0, 999);
   if (start === 0) return 0;
-  var n = Math.floor(Math.max(0, num(elapsed)) / stepMs(start, dur));
+  var n = Math.floor(Math.max(0, num(elapsed)) / stepMs(speed));
   return Math.max(0, start - n);
 }
 /* 表示は1フレームに1ずつだけ動かす（数字が飛ばないように） */
@@ -326,14 +323,14 @@ function breathAt(t, inMs, outMs){
 /* 温度計の液面（y座標） 0→320, 目盛りの上端→40 */
 function liquidY(v, m){ var t = scaleTop(m); return 320 - clamp(num(v), 0, t) * 280 / t; }
 
-var core = { MAX:MAX, LIMITS:LIMITS, safeLimit:safeLimit, scaleTop:scaleTop, MIN_STEP:MIN_STEP, QUICK_MS:QUICK_MS, BREATHS:BREATHS, clamp:clamp, ease:ease, addTemp:addTemp,
+var core = { MAX:MAX, LIMITS:LIMITS, safeLimit:safeLimit, scaleTop:scaleTop, SPEEDS:SPEEDS, QUICK_MS:QUICK_MS, BREATHS:BREATHS, clamp:clamp, ease:ease, addTemp:addTemp,
   hueFor:hueFor, rgbFor:rgbFor, colorFor:colorFor, inkFor:inkFor, stepMs:stepMs, targetAt:targetAt, stepToward:stepToward,
   breathAt:breathAt, liquidY:liquidY };
 
 /* ========== 状態 ========== */
 var $ = function(id){ return document.getElementById(id); };
 var clock = { now: function(){ return (window.performance && performance.now) ? performance.now() : Date.now(); } };
-var settings = { max:100, duration:10000, breath:'normal', vibe:'on', sound:'off' };
+var settings = { max:100, speed:125, breath:'normal', vibe:'on', sound:'off' };
 var S = {
   mode:'charge', value:0, practiced:false,
   coolId:null, t0:0, startValue:0, lastPhase:null, lastPulse:0, raf:0,
@@ -471,9 +468,9 @@ function startCool(id){
 function frame(now){
   if (S.mode !== 'cool') return;
   var el = now - S.t0;
-  var target = targetAt(S.startValue, el, settings.duration);
-  var nv = stepToward(S.value, target);
-  if (nv !== S.value){ S.value = nv; renderTemp(); }
+  var target = targetAt(S.startValue, el, settings.speed);
+  /* 呼吸中は下がるだけ。設定が変わっても上がらない */
+  if (target < S.value){ S.value = Math.max(0, S.value - 1); renderTemp(); }
   var bp = BREATHS[settings.breath] || BREATHS.normal;
   var b = breathAt(el, bp.inMs, bp.outMs);
   $('ball').style.transform = 'scale(' + b.scale.toFixed(4) + ')';
@@ -525,7 +522,7 @@ function chooseFeel(key){
   $('reply').textContent = REPLIES[key];
   return true;
 }
-function again(){ if (S.mode !== 'check') return; S.mode = 'charge'; render(); }
+function again(){ if (S.mode !== 'check') return; S.mode = 'charge'; render(); if (S.value > 0) showHint('「冷静になる」を おしたまま にしよう'); }
 function resetAll(){ S.value = 0; S.practiced = false; S.feel = null; S.mode = 'charge'; render(); }
 
 /* ========== せってい ========== */
@@ -539,7 +536,7 @@ function syncSettingsUI(){
     ? 'この きかいは ふるえに たいおう しています。'
     : 'iPad・パソコン・Chromebook では ふるえません。iPhone は iOS 18 以降で かるく ふるえる ことが あります。';
 }
-function openSheet(){ $('sheet').hidden = false; syncSettingsUI(); $('btnClose').focus(); }
+function openSheet(){ if (S.mode === 'cool') endCool(); $('sheet').hidden = false; syncSettingsUI(); $('btnClose').focus(); }
 function closeSheet(){ $('sheet').hidden = true; $('btnSettings').focus(); }
 
 /* ========== イベント ========== */
@@ -589,6 +586,7 @@ function bind(){
   });
   bk.addEventListener('blur', function(){ if (S.coolId === 'key') endCool(); });
   document.addEventListener('visibilitychange', function(){ if (document.hidden && S.mode === 'cool') endCool(); });
+  window.addEventListener('blur', function(){ if (S.mode === 'cool') endCool(); });
   document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
 
   $('btnMinus').addEventListener('click', minusOne);
@@ -607,11 +605,20 @@ function bind(){
     var b = e.target.closest ? e.target.closest('.seg button') : null;
     if (!b) return;
     var key = b.parentNode.getAttribute('data-key'), val = b.getAttribute('data-val');
-    settings[key] = (key === 'duration' || key === 'max') ? Number(val) : val;
+    settings[key] = (key === 'speed' || key === 'max') ? Number(val) : val;
     if (key === 'max'){ S.value = Math.min(S.value, settings.max); buildTicks(); render(); }
     syncSettingsUI();
   });
-  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && !$('sheet').hidden) closeSheet(); });
+  document.addEventListener('keydown', function(e){
+    if ($('sheet').hidden) return;
+    if (e.key === 'Escape'){ closeSheet(); return; }
+    if (e.key === 'Tab'){ // 設定画面の外へフォーカスを出さない
+      var f = $('sheet').querySelectorAll('button'), first = f[0], last = f[f.length - 1];
+      if (!$('sheet').contains(document.activeElement)){ e.preventDefault(); first.focus(); }
+      else if (e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+    }
+  });
 }
 
 /* ========== 起動 ========== */
